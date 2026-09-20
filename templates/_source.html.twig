@@ -1,0 +1,14 @@
+<h3>{{ record.entity.properties.name|default([record.entity.id])|join(' · ') }}</h3>
+<dl>{% for property, values in record.entity.properties %}<dt>{{ property }}</dt><dd>{{ values|join(' · ') }}</dd>{% endfor %}</dl>
+<p><small>Source ID: {{ record.entity.id }} · export version {{ record.version }}</small></p>
+<h4>Source evidence</h4>
+{% for evidence in record.evidence %}
+{% set sourceLink = linker.link(dataset, evidence.annotation.target.source) %}
+<blockquote>{% for selector in evidence.annotation.target.selector %}{% if selector.type == 'TextQuoteSelector' %}{{ selector.exact }}{% endif %}{% endfor %}</blockquote>
+<p>{% if sourceLink %}<a href="{{ sourceLink }}">Read source block</a>{% else %}Source: {{ evidence.annotation.target.source }}{% endif %}</p>
+<details><summary>Extraction provenance and source version</summary><pre>{{ evidence|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></details>
+{% else %}<p>No text-span evidence was supplied for this entity. Its properties remain unverified claims.</p>{% endfor %}
+
+{% if record.validationErrors %}<p>Incomplete extraction: {{ record.validationErrors|join(' · ') }}</p>{% endif %}
+
+<p><small>The quote and hash are recorded evidence; the current article text has not been reverified against that hash here.</small></p>

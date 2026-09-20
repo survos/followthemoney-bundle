@@ -1,0 +1,32 @@
+{% extends baseTemplate %}
+{% block title %}Historical identity review{% endblock %}
+{% block body %}<main class="container py-4">
+<p><a href="{{ path('ftm_review_home') }}">Review datasets</a></p><h1>Historical identity review</h1><p><a href="{{ path('ftm_review_report',{dataset:dataset}) }}">Reviewed identity links</a></p><p>{{ dataset }}</p>
+<p>Scores suggest candidates, not established identities. A shared printed name may refer to different people.</p>
+{% for message in app.flashes('success') %}<p role="status">{{ message }}</p>{% endfor %}
+{% if error %}<p role="alert">{{ error }}. No decisions have been changed.</p>{% endif %}
+{% if not current %}<p role="status">Source evidence and the matching index are not at the same current version. Review is read-only until they agree.</p>{% endif %}
+<form method="get"><label for="name-query">Name as printed</label> <input id="name-query" name="q" value="{{ q }}" required maxlength="300"> <button>Find entries</button></form>
+{% if search %}<p>{{ search.total }}{% if search.totalRelation != 'eq' %}+{% endif %} entries</p><ul>{% for hit in search.candidates %}<li><a href="{{ path('ftm_review',{dataset:dataset,id:hit.entity.id}) }}">{{ hit.entity.name }}</a> <small>{{ hit.entity.id }}</small></li>{% endfor %}</ul>
+{% if offset > 0 %}<a href="{{ path('ftm_review',{dataset:dataset,q:q,offset:max(0,offset-20)}) }}">Previous</a>{% endif %}
+{% if offset+20 < search.total and offset+20 <= 9499 %}<a href="{{ path('ftm_review',{dataset:dataset,q:q,offset:offset+20}) }}">Next</a>{% endif %}
+{% endif %}
+{% if source %}
+<section class="card p-3 my-3"><h2>Original entry</h2>{% include '@SurvosFollowTheMoney/_source.html.twig' with {record:source} %}</section>
+<h2>Possible matches</h2>
+{% for item in candidates %}<section class="card p-3 my-3"><p>Candidate score: {{ item.candidate.score is null ? 'Not supplied' : item.candidate.score|number_format(3) }}</p>
+{% if item.target %}{% include '@SurvosFollowTheMoney/_source.html.twig' with {record:item.target} %}{% else %}<h3>{{ item.candidate.entity.name }}</h3><p>Import this candidate's source evidence before reviewing it.</p>{% endif %}
+{% if item.history %}<p>Latest decision: <strong>{{ item.history[0].decision }}</strong> · {{ item.history[0].actor }} · {{ item.history[0].created_at }}</p><p>{{ item.history[0].reason }}</p>{% endif %}
+<a href="{{ path('ftm_review_history',{dataset:dataset,source:source.entity.id,target:item.candidate.entity.id}) }}">Full decision history and snapshots</a>
+{% if current and item.target %}<form method="post" action="{{ path('ftm_review_decide',{dataset:dataset}) }}">
+<input type="hidden" name="source" value="{{ source.entity.id }}"><input type="hidden" name="target" value="{{ item.candidate.entity.id }}">
+<input type="hidden" name="version" value="{{ source.version }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+{% set pairIds = [source.entity.id,item.candidate.entity.id]|sort %}
+<input type="hidden" name="_token" value="{{ csrf_token(item.pair) }}">
+<label>Reason and supporting evidence <textarea name="reason" required maxlength="4000"></textarea></label>
+<button name="decision" value="same">Same person</button> <button name="decision" value="different">Different people</button> <button name="decision" value="unresolved">Unresolved</button>
+</form>{% endif %}</section>
+{% else %}<p>No other candidates returned. This does not establish a unique identity.</p>{% endfor %}
+{% if relations %}<h2>Reported relationships and adjacent entities</h2><p>These are extracted claims, independent of identity decisions. Pagination applies separately to each relationship property.</p>
+{% for property, group in relations.groups %}<h3>{{ property }} ({{ group.total }})</h3><ul>{% for entity in group.entities %}<li><pre>{{ entity|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></li>{% endfor %}</ul>{% else %}<p>No adjacent relationships returned.</p>{% endfor %}{% endif %}
+{% endif %}</main>{% endblock %}

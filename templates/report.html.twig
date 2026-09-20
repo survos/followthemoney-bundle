@@ -1,0 +1,8 @@
+{% extends baseTemplate %}
+{% block title %}Reviewed identity links{% endblock %}
+{% block body %}<main class="container py-4"><h1>Reviewed identity links</h1><p>{{ dataset }}</p><a href="{{ path('ftm_review',{dataset:dataset}) }}">Find entries</a><p>Latest decision per pair, up to 200 pairs. These links do not alter the extracted entities or establish the truth of newspaper claims.</p>
+{% for row in rows %}<section class="card p-3 my-3"><h2>{{ row.decision }}</h2>
+<p><a href="{{ path('ftm_review',{dataset:dataset,id:row.source_id}) }}">{{ row.snapshot.source.entity.properties.name|join(' · ') }}</a> ↔ <a href="{{ path('ftm_review',{dataset:dataset,id:row.target_id}) }}">{{ row.snapshot.target.entity.properties.name|join(' · ') }}</a></p>
+<p>{{ row.reason }} · {{ row.actor }} · {{ row.created_at }}</p>
+{% if row.snapshot.source.version != version %}<p>Source export changed since this review. Revisit the evidence before relying on the link.</p>{% endif %}
+<a href="{{ path('ftm_review_history',{dataset:dataset,source:row.source_id,target:row.target_id}) }}">History and evidence snapshots</a></section>{% else %}<p>No reviewed pairs yet.</p>{% endfor %}</main>{% endblock %}

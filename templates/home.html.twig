@@ -1,0 +1,5 @@
+{% extends baseTemplate %}
+{% block title %}Historical identity review{% endblock %}
+{% block body %}<main class="container py-4"><h1>Historical identity review</h1>
+<p>Find possible links between printed names. Review the evidence before recording a decision.</p>
+<ul>{% for dataset in datasets %}<li><a href="{{ path('ftm_review', {dataset: dataset}) }}">{{ dataset }}</a></li>{% endfor %}</ul></main>{% endblock %}
